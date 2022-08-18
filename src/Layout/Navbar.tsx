@@ -14,6 +14,7 @@ import {
   FaCode,
   FaExchangeAlt,
   FaFileImage,
+  FaFilePdf,
   FaMarkdown,
   FaPaste,
   FaRandom,
@@ -85,6 +86,7 @@ export const data = [
   { id: 15, to: "/units", icon: <FaExchangeAlt />, text: "Unit Converter" },
   { id: 16, to: "/playground", icon: <FaReact />, text: "React Pad" },
   { id: 17, to: "/rest", icon: <MdHttp />, text: "REST API" },
+  { id: 18, to: "/pdf", icon: <FaFilePdf />, text: "PDF Reader" },
 ];
 
 export const Navbar = () => {

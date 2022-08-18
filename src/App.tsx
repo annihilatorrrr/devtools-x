@@ -13,6 +13,7 @@ import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import Nums from "./Features/number-tools/Nums";
 import { data, Navbar } from "./Layout/Navbar";
 import { Settings } from "./Layout/Settings";
+import PDFReader from "./Features/pdf/PDFReader";
 
 // Lazy load components
 const Welcome = loadable(() => import("./Components/Welcome"));
@@ -30,6 +31,7 @@ const YamlJson = loadable(() => import("./Features/yaml-json/Yaml"));
 const Pastebin = loadable(() => import("./Features/pastebin/Pastebin"));
 const Repl = loadable(() => import("./Features/repl/Repl"));
 const Image = loadable(() => import("./Features/image/Image"));
+// const PDFReader = loadable(() => import("./Features/pdf/PDFReader"));
 const Playground = loadable(() => import("./Features/playground/Playground"));
 const Rest = loadable(() => import("./Features/rest/Rest"));
 const UnitConverter = loadable(
@@ -142,6 +144,7 @@ function App() {
             <Route path="/units" element={<UnitConverter />}></Route>
             <Route path="/playground" element={<Playground />}></Route>
             <Route path="/rest" element={<Rest />}></Route>
+            <Route path="/pdf" element={<PDFReader />}></Route>
           </Routes>
         </Group>
         <Box
