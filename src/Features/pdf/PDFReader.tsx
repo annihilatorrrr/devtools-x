@@ -1,64 +1,29 @@
 import { Button, Group, Stack } from "@mantine/core";
 import { dialog, fs } from "@tauri-apps/api";
-import { convertFileSrc } from "@tauri-apps/api/tauri";
-import * as pdfjsLib from "pdfjs-dist";
+// import { convertFileSrc } from "@tauri-apps/api/tauri";
+// import * as pdfjsLib from "pdfjs-dist";
 import { useRef, useState } from "react";
+import { Document, Page } from "react-pdf";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "../../../node_modules/pdfjs-dist/build/pdf.worker.js";
+// pdfjs.GlobalWorkerOptions.workerSrc = `../../../node_modules/pdfjs-dist/build/pdf.worker.js`;
+// "../../../node_modules/pdfjs-dist/build/pdf.worker.js";
 
-let pageNum = 1;
-let pageRendering = false;
-let pageNumPending = 0;
-let scale = 0.8;
+// let pageNum = 1;
+// let pageRendering = false;
+// let pageNumPending = 0;
+// let scale = 6;
 
 const PDFReader = () => {
+  const [doc, setDoc] = useState<any>(null);
+  const [numPages, setNumPages] = useState(null);
+  const [pageNumber, setPageNumber] = useState(1);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const pdfDocRef = useRef<pdfjsLib.PDFDocumentProxy>();
 
-  const renderPage = (num: number) => {
-    pageRendering = true;
-    // Using promise to fetch the page
-    const pdfDoc = pdfDocRef.current;
-    if (!pdfDoc) return;
-    console.log("Rendering page", num);
-    pdfDoc.getPage(num).then(function (page) {
-      var viewport = page.getViewport({ scale: scale });
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-
-      // Render PDF page into canvas context
-      var renderContext = {
-        canvasContext: canvas.getContext("2d") as any,
-        viewport: viewport,
-      };
-      var renderTask = page.render(renderContext);
-
-      // Wait for rendering to finish
-      renderTask.promise.then(function () {
-        pageRendering = false;
-        if (pageNumPending !== 0) {
-          // New page rendering is pending
-          renderPage(pageNumPending);
-          pageNumPending = 0;
-        }
-      });
-    });
-  };
-
-  /**
-   * If another page rendering in progress, waits until the rendering is
-   * finised. Otherwise, executes rendering immediately.
-   */
-  const queueRenderPage = (num: number) => {
-    if (pageRendering) {
-      pageNumPending = num;
-    } else {
-      renderPage(num);
-    }
-  };
+  function onDocumentLoadSuccess({ numPages }) {
+    console.log("PDF loaded", numPages);
+    setNumPages(numPages);
+  }
 
   return (
     <Stack sx={{ height: "100%", width: "100%", overflow: "auto" }}>
@@ -66,11 +31,7 @@ const PDFReader = () => {
         <Button
           size="xs"
           onClick={() => {
-            if (pageNum <= 1) {
-              return;
-            }
-            pageNum--;
-            queueRenderPage(pageNum);
+            setPageNumber(pageNumber - 1);
           }}
         >
           Prev
@@ -78,18 +39,30 @@ const PDFReader = () => {
         <Button
           size="xs"
           onClick={() => {
-            const pdfDoc = pdfDocRef.current;
-            if (pageNum >= pdfDoc.numPages) {
-              return;
-            }
-            pageNum++;
-            queueRenderPage(pageNum);
+            setPageNumber(pageNumber + 1);
           }}
         >
           Next
         </Button>
       </Group>
-      <canvas ref={canvasRef}></canvas>
+      <div id="wrapper">
+        {/* <canvas ref={canvasRef}></canvas> */}
+        {doc && (
+          <Document
+            file={{ data: doc }}
+            onLoadProgress={(data) => console.log("load progress", data)}
+            onLoadError={(err) => {
+              console.error("load error", err);
+            }}
+            onLoadSuccess={onDocumentLoadSuccess}
+            onSourceError={(err) => {
+              console.error("source error", err);
+            }}
+          >
+            <Page pageNumber={pageNumber} />
+          </Document>
+        )}
+      </div>
       <Button
         onClick={async () => {
           const path = (await dialog.open({
@@ -99,33 +72,7 @@ const PDFReader = () => {
           })) as string; // multiple is false
           if (!path) return;
           const data = await fs.readBinaryFile(path);
-          const pdfDoc = await pdfjsLib.getDocument(data).promise;
-          pdfDocRef.current = pdfDoc;
-          renderPage(1);
-          //   pdfDoc.getPage(1).then((pdfPage) => {
-          //     var outputScale = window.devicePixelRatio || 1;
-
-          //     const viewport = pdfPage.getViewport({ scale: 1.0 });
-          //     const canvas = canvasRef.current;
-          //     if (!canvas) return;
-          //     canvas.width = Math.floor(viewport.width * outputScale);
-          //     canvas.height = Math.floor(viewport.height * outputScale);
-          //     canvas.style.width = Math.floor(viewport.width) + "px";
-          //     canvas.style.height = Math.floor(viewport.height) + "px";
-
-          //     const ctx: any = canvas.getContext("2d");
-
-          //     var transform =
-          //       outputScale !== 1
-          //         ? [outputScale, 0, 0, outputScale, 0, 0]
-          //         : undefined;
-
-          //     pdfPage.render({
-          //       canvasContext: ctx,
-          //       viewport,
-          //       transform,
-          //     });
-          //   });
+          setDoc(data);
         }}
       >
         Select PDF
